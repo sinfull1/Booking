@@ -17,71 +17,29 @@ public class UUIDHashGenerator extends UUIDGenerator {
 
     @Override
     public Serializable generate(SharedSessionContractImplementor session, Object object) throws HibernateException {
-        if (object instanceof Hotel hotel) {
-            String data = hotel.getName();
-            if (StringUtils.hasText(data)) {
-                try {
-                    MessageDigest digest = MessageDigest.getInstance(ALGORITHM);
-                    byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-                    ByteBuffer buffer = ByteBuffer.wrap(hash);
-                    return new UUID(buffer.getLong(), buffer.getLong());
-                } catch (NoSuchAlgorithmException e) {
-                    throw new HibernateException("Failed to generate UUID", e);
-                }
+
+        return switch (object) {
+            case Hotel hotel ->  createHash(hotel.getName());
+            case Room room -> createHash(room.getNumber() + room.getType().toString() + room.getHotel().getHotel_id().toString());
+            case Guest guest -> createHash (guest.getName() + guest.getEmail() + guest.getPhone());
+            case Reservation reservation -> createHash(reservation.getRoomId() + reservation.getGuest().getGuestId().toString());
+            case RoomInventory roomInventory -> createHash(roomInventory.getRoomId() + roomInventory.getDate());
+            default -> (Serializable) super.generate(session, object);
+        };
+
+    }
+
+    private Serializable createHash(String data) {
+        if (StringUtils.hasText(data)) {
+            try {
+                MessageDigest digest = MessageDigest.getInstance(ALGORITHM);
+                byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
+                ByteBuffer buffer = ByteBuffer.wrap(hash);
+                return new UUID(buffer.getLong(), buffer.getLong());
+            } catch (NoSuchAlgorithmException e) {
+                throw new HibernateException("Failed to generate UUID", e);
             }
         }
-        if (object instanceof Room room) {
-            String data = room.getNumber() + room.getType().toString() + room.getHotel().getHotel_id().toString();
-            if (StringUtils.hasText(data)) {
-                try {
-                    MessageDigest digest = MessageDigest.getInstance(ALGORITHM);
-                    byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-                    ByteBuffer buffer = ByteBuffer.wrap(hash);
-                    return new UUID(buffer.getLong(), buffer.getLong());
-                } catch (NoSuchAlgorithmException e) {
-                    throw new HibernateException("Failed to generate UUID", e);
-                }
-            }
-        }
-        if (object instanceof Guest guest) {
-            String data = guest.getName() + guest.getEmail() + guest.getPhone();
-            if (StringUtils.hasText(data)) {
-                try {
-                    MessageDigest digest = MessageDigest.getInstance(ALGORITHM);
-                    byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-                    ByteBuffer buffer = ByteBuffer.wrap(hash);
-                    return new UUID(buffer.getLong(), buffer.getLong());
-                } catch (NoSuchAlgorithmException e) {
-                    throw new HibernateException("Failed to generate UUID", e);
-                }
-            }
-        }
-        if (object instanceof Reservation reservation) {
-            String data = reservation.getRoomId() + reservation.getGuest().getGuestId().toString();
-            if (StringUtils.hasText(data)) {
-                try {
-                    MessageDigest digest = MessageDigest.getInstance(ALGORITHM);
-                    byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-                    ByteBuffer buffer = ByteBuffer.wrap(hash);
-                    return new UUID(buffer.getLong(), buffer.getLong());
-                } catch (NoSuchAlgorithmException e) {
-                    throw new HibernateException("Failed to generate UUID", e);
-                }
-            }
-        }
-        if (object instanceof RoomInventory roomInventory) {
-            String data = roomInventory.getRoomId() + roomInventory.getDate();
-            if (StringUtils.hasText(data)) {
-                try {
-                    MessageDigest digest = MessageDigest.getInstance(ALGORITHM);
-                    byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-                    ByteBuffer buffer = ByteBuffer.wrap(hash);
-                    return new UUID(buffer.getLong(), buffer.getLong());
-                } catch (NoSuchAlgorithmException e) {
-                    throw new HibernateException("Failed to generate UUID", e);
-                }
-            }
-        }
-        return (Serializable) super.generate(session, object);
+        return "";
     }
 }
